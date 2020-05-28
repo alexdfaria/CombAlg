@@ -1,6 +1,9 @@
 var express = require('express');
 var app = express();
 
+app.use(express.static(__dirname + "/genome.html"));
+app.use(express.static(__dirname + "/"));
+
 var path = require('path');
 const fileupload = require('express-fileupload');
 const fs = require('fs');
@@ -30,14 +33,6 @@ app.use(fileupload());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(__dirname + '/public'));
 
-
-
-app.get('/', function (req, res) {
-    res.status(200);
-    res.sendFile(__dirname + '/index.html');
-});
-
-
 // Ver melhor para que isto serve
 app.get('/teste', function (req, res) {
 
@@ -53,8 +48,6 @@ app.get('/teste', function (req, res) {
     console.log(resultado)
     res.send(resultado)
 });
-
-
 // Tests
 app.post('/teste', function (req, res) {
 
@@ -63,6 +56,54 @@ app.post('/teste', function (req, res) {
 
 });
 
+app.get('/', function (req, res) {
+    res.status(200);
+    res.sendFile(__dirname + '/index.html');
+});
+
+app.get('/genome', function (req, res) {
+    res.sendFile(__dirname + "/genome.html");
+});
+
+/* app.post('/genome', async function (req, res) {
+
+    // Variables
+    var file = req.files.myfile;
+    var filename = file.name;
+    var pathfile = __dirname + '/upload/' + filename;
+
+    // Create folders if they don't exist
+    fs.mkdir(__dirname + '/upload', { recursive: true }, (err) => { if (err) throw err; });
+    fs.mkdir(__dirname + '/download', { recursive: true }, (err) => { if (err) throw err; });
+
+    await movefile(pathfile, file);
+
+    // Read uploaded file
+    var data = fs.readFile(pathfile, 'utf8', async function (err, data) {
+        if (err) throw err;
+
+        // Search the occurrences of the inputs in the file
+         for (i = 0; i < input.length; i++) {
+
+            await getIndexes(data, input[i])
+        } 
+
+        // Sort the Array of Indexes
+        //indexes.sort(brute.compareNumber)
+
+
+        // Sorts the Deltas Array by number
+        //deltasArray.sort(brute.compareNumber)
+
+
+
+        if (req.body.genometype == "simple") {
+        }
+
+        console.log("Teste")
+    })
+
+}) */
 
 
 app.post('/', async function (req, res) {
@@ -77,8 +118,6 @@ app.post('/', async function (req, res) {
     fs.mkdir(__dirname + '/download', { recursive: true }, (err) => { if (err) throw err; });
 
     await movefile(pathfile, file);
-
-    //   res.sendFile(__dirname + '/teste.html');
 
     // Read uploaded file
     var data = fs.readFile(pathfile, 'utf8', async function (err, data) {
@@ -172,20 +211,20 @@ app.post('/', async function (req, res) {
             data += "Pairwise Distances: " + deltasArray.toString() + '\n\n'
             data += "Output: " + dnaArray.toString() + '\n'
 
-                //res.send(deltasArray)
+            //res.send(deltasArray)
 
-                // Create result file
-                fs.writeFileSync(__dirname + '/download/result.txt', data, 'utf8', function (err) {
-                    if (err) console.log('error', err);
+            // Create result file
+            fs.writeFileSync(__dirname + '/download/result.txt', data, 'utf8', function (err) {
+                if (err) console.log('error', err);
 
-                    // Download the file
-                    /*             if (req.body.alglist == "brute") {
-                                    res.download(__dirname + '/download/' + "result.txt", "result.txt")
-                                }
-                                else {
-                                    res.download(__dirname + '/download/' + "result.txt", "result.txt")
-                                } */
-                });
+                // Download the file
+                /*             if (req.body.alglist == "brute") {
+                                res.download(__dirname + '/download/' + "result.txt", "result.txt")
+                            }
+                            else {
+                                res.download(__dirname + '/download/' + "result.txt", "result.txt")
+                            } */
+            });
 
             res.download(__dirname + '/download/result.txt')
         }
