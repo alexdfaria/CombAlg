@@ -14,6 +14,7 @@ var multer = require('multer')
 
 var brute = require('./BruteForcePDP.js');
 var partial = require('./PartialDigest.js');
+var reversal = require('./Reversals.js');
 
 
 var dnaArray = []
@@ -62,10 +63,10 @@ app.get('/', function (req, res) {
 });
 
 app.get('/genome', function (req, res) {
-    res.sendFile(__dirname + "/genome.html");
+    res.redirect("/genome.html");
 });
 
-/* app.post('/genome', async function (req, res) {
+app.post('/genome.html', async function (req, res) {
 
     // Variables
     var file = req.files.myfile;
@@ -82,31 +83,170 @@ app.get('/genome', function (req, res) {
     var data = fs.readFile(pathfile, 'utf8', async function (err, data) {
         if (err) throw err;
 
-        // Search the occurrences of the inputs in the file
-         for (i = 0; i < input.length; i++) {
 
-            await getIndexes(data, input[i])
-        } 
+        // Remove line breaks and spaces from in readFile and separate every value by a comma
+        var newData = data.replace(/(\r\n|\n|\r)/gm, ",")
 
-        // Sort the Array of Indexes
-        //indexes.sort(brute.compareNumber)
+        // Save in an array of numbers every number between a comma
+/*         var piArray = newData.split(',').map(function (item) {
+            return parseInt(item, 10);
+        }); */
+
+        //var piArray = [3, 4, 1, 2, 5, 6, 7, 10, 9, 8]
+        var piArray = [13, 2, 17, 1, 3, 20, 19, 11, 12, 4, 5, 16, 15, 10, 18, 14, 8, 7, 6, 9]
+
+        //console.log(piArray)
+
+        //console.log(array100.length)
+        //console.log(array100)
+
+        function improvedBreakpointReversalSort(seq) {
+
+            seq.unshift(0)
+            seq.push(seq.length)
+            var lastChoice = [[0, 0]]
+            var reversalF
+            var arraySorted = []
+
+            while (reversal.hasBreakpoints(seq)) {
+
+                console.log(" \n ")
+
+                var test5 = reversal.getStrips(seq)
+
+                //console.log(test5)
+                //console.log("ultima: " + lastChoice[0])
+
+                var decreasingCopy = test5.decreasing.slice()
+
+                // ver se é necessario percorrer o array dos decreasing todo
+                var f1 = decreasingCopy.toString()
+                var f2 = lastChoice[0].toString()
 
 
-        // Sorts the Deltas Array by number
-        //deltasArray.sort(brute.compareNumber)
 
+                if ((test5.decreasing.length > 0) && (f1 != f2)) {
+                    reversalF = reversal.pickReversal(seq, test5.decreasing, test5.increasing, test5.others)
+
+                    /*                     console.log("Decrea")
+                                        console.log(test5.decreasing) */
+
+                }
+                else {
+                    //console.log("0 breakpoints")
+                    reversalF = reversal.pickReversal(seq, test5.increasing)
+
+                }
+
+                //console.log(seq)
+                console.log(reversalF)
+                /*                 console.log(reversalF[1][0])
+                                console.log(reversalF[1][1]) */
+
+                var numb1 = reversalF[1][0].toString()
+                var numb2 = reversalF[1][1].toString()
+
+                lastChoice = [[parseInt(numb1), parseInt(numb2)]]
+
+                //console.log(lastChoice)
+
+                seq = reversal.reversePart2(seq, parseInt(numb1), parseInt(numb2))
+
+                data += "Reversals: (" + reversalF[0] + ", [" + reversalF[1] + "])  ——  Genome: " + seq + '\n'
+
+                console.log(seq)
+            }
+
+            arraySorted = seq.slice(1, -1)
+
+            data += "\nFinal Genome: " + arraySorted
+
+            return arraySorted
+
+        }
 
 
         if (req.body.genometype == "simple") {
+
+            console.log("Simple Reversal Sort: ")
+            console.log(piArray)
+
+            data = "\t\t\t SIMPLE REVERSAL SORT \n\n"
+            data += "Initial Genome: " + piArray + '\n\n'
+
+            var arraySorted = piArray.slice().sort()
+            var counter = 0
+
+            for (var i = 1; i < piArray.length + 1; i++) {
+
+                var j = piArray.indexOf(i)
+
+                if (j != i - 1) {
+                    reversal.reversePart(piArray, i - 1, j)
+                    counter++
+                    console.log(counter + ": " + piArray)
+                    data += "Reversals: " + counter + "  ——  Genome: " + piArray + '\n'
+                }
+
+                if (reversal.arraysEqual(piArray, arraySorted)) {
+                    console.log("Break: already sorted")
+                    break
+                }
+            }
+
+            //res.send(piArray)
+
+        }
+        else {
+
+
+            console.log(piArray)
+
+            data = "\t\t\t IMPROVED BREAKPOINT REVERSAL SORT \n\n"
+            data += "Initial Genome: " + piArray + '\n\n'
+
+            //console.log(arraySorted)
+
+            //var test = reversal.getStrips(piArray)
+            //console.log(test.increasing)
+            //console.log(test.decreasing)
+            //console.log(test)
+            //console.log(reversal.pickReversal(piArray, test.decreasing))
+
+            /*             def improvedBreakpointReversalSort(seq):
+                        while hasBreakpoints(seq):
+                            increasing, decreasing = getStrips(seq)
+                        if len(decreasing) > 0:
+                            reversal = pickReversal(seq, increasing + decreasing)
+                        else:
+                        print "0:",
+                            reversal = increasing[0]
+                        print seq, "reversal", reversal
+                        seq = doReversal(seq, reversal)
+                        print seq, "Sorted"
+                        return */
+
+            var breakpointReversal = improvedBreakpointReversalSort(piArray)
+
+            //res.send(breakpointReversal)
         }
 
-        console.log("Teste")
+        // Create result file
+        fs.writeFileSync(__dirname + '/download/result.txt', data, 'utf8', function (err) {
+            if (err) console.log('error', err);
+        });
+
+        res.download(__dirname + '/download/' + "result.txt")
+
+
     })
 
-}) */
+})
 
 
 app.post('/', async function (req, res) {
+
+
 
     // Variables
     var file = req.files.myfile;
